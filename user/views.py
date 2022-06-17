@@ -4,13 +4,13 @@ from rest_framework import permissions
 from rest_framework.response import Response
 
 from django.contrib.auth import login, logout, authenticate
+
+
 # APIView를 상속 받아 이제 Rest Framework의 APIView 가 됨
-
-
 class UserView(APIView):    # CVB 방식
 
-    # permission_classes = [permissions.AllowAny]  # 누구나 view 조회 가능
-    permission_classes = [permissions.IsAdminUser]  # admin만 view 조회 가능
+    permission_classes = [permissions.AllowAny]  # 누구나 view 조회 가능
+    # permission_classes = [permissions.IsAdminUser]  # admin만 view 조회 가능
     # permission_classes = [permissions.IsAuthenticated] # 로그인 된 사용자만 view 조회 가능
 
     def get(self, request):     # 사용자 정보 조회

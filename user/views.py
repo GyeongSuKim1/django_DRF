@@ -8,19 +8,22 @@ from django.contrib.auth import login, logout, authenticate
 
 from user.models import UserProfile
 
-from user.serializers import UserSerializer     # 시리얼라이즈를 가져 옴
-
 from user.models import UserProfile as UserProfileModel
 from user.models import User as UserModel
 from user.models import Hobby as HobbyModel
+
+from user.serializers import UserSerializer     # 시리얼라이즈를 가져 옴
+
+from django_DRF.permissions import RegistedMoreThanAWeekUser
 
 
 # APIView를 상속 받아 이제 Rest Framework의 APIView 가 됨
 class UserView(APIView):    # CVB 방식
 
-    permission_classes = [permissions.AllowAny]  # 누구나 view 조회 가능
+    # permission_classes = [permissions.AllowAny]  # 누구나 view 조회 가능
     # permission_classes = [permissions.IsAdminUser]  # admin만 view 조회 가능
     # permission_classes = [permissions.IsAuthenticated] # 로그인 된 사용자만 view 조회 가능
+    permission_classes = [RegistedMoreThanAWeekUser] # 커스텀한 퍼미션클래스
 
     def get(self, request):     # 사용자 정보 조회
         

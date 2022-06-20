@@ -13,6 +13,8 @@ from user.models import User as UserModel
 from user.models import Hobby as HobbyModel
 
 from user.serializers import UserSerializer     # 시리얼라이즈를 가져 옴
+from user.serializers import UserSignupSerializer
+
 
 from django_DRF.permissions import RegistedMoreThanAWeekUser
 
@@ -23,13 +25,15 @@ class UserView(APIView):    # CVB 방식
     # permission_classes = [permissions.AllowAny]  # 누구나 view 조회 가능
     # permission_classes = [permissions.IsAdminUser]  # admin만 view 조회 가능
     # permission_classes = [permissions.IsAuthenticated] # 로그인 된 사용자만 view 조회 가능
-    permission_classes = [RegistedMoreThanAWeekUser] # 커스텀한 퍼미션클래스
+    # permission_classes = [RegistedMoreThanAWeekUser] # 커스텀한 퍼미션클래스
 
     def get(self, request):     # 사용자 정보 조회
         
         all_users = UserModel.objects.all()
         
-        return Response(UserSerializer(all_users, many=True).data)  # 뒤에 data를 붙여줘야 결과물이 json으로 return 됨
+        # return Response(UserSerializer(all_users, many=True).data)  # 뒤에 data를 붙여줘야 결과물이 json으로 return 됨
+        return Response(UserSerializer(request.user).data)  # 로그인 한 사용자만 ↑↑ 모든 사용자
+
 
         # OneToOne field는 예외로 _set이 붙지 않는다.
         # hobbys = user.userprofile.hobby.all()    # 역참조 사용
@@ -52,7 +56,17 @@ class UserView(APIView):    # CVB 방식
 
 
     def post(self, request):    # 회원가입
-        return Response({"message": "post method! success"})
+        serializer = UserSignupSerializer(data=request.data)
+        
+        # 시리얼라이져 내장 함수인 is_valid를 사용허여 자체적으로 검증을 해줌
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "signup Success !"})
+        else:
+            print(serializer.errors)
+            return Response({"errors": "signup Failed !"})
+        # return Response({"message": "put method! success"})
+
 
     def put(self, request):     # 회원 정보 수정
         return Response({"message": "put method! success"})

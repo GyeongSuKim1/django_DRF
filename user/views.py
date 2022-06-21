@@ -1,8 +1,10 @@
+from multiprocessing import context
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework.response import Response
 from django.db.models import F, Q
+from rest_framework import status
 
 from django.contrib.auth import login, logout, authenticate
 
@@ -17,6 +19,8 @@ from user.serializers import UserSignupSerializer
 
 
 from django_DRF.permissions import RegistedMoreThanAWeekUser
+from django_DRF.permissions import IsAdminOrIsAuthenticatedReadOnly
+
 
 
 # APIView를 상속 받아 이제 Rest Framework의 APIView 가 됨
@@ -26,13 +30,16 @@ class UserView(APIView):    # CVB 방식
     # permission_classes = [permissions.IsAdminUser]  # admin만 view 조회 가능
     # permission_classes = [permissions.IsAuthenticated] # 로그인 된 사용자만 view 조회 가능
     # permission_classes = [RegistedMoreThanAWeekUser] # 커스텀한 퍼미션클래스
+    permission_classes = [IsAdminOrIsAuthenticatedReadOnly] # admin 사용자는 모두 가능, 로그인 사용자는 조회만 가능
 
     def get(self, request):     # 사용자 정보 조회
         
         all_users = UserModel.objects.all()
         
+        user_serializer = UserSerializer(request.user, context={"request": request}).data
+        
         # return Response(UserSerializer(all_users, many=True).data)  # 뒤에 data를 붙여줘야 결과물이 json으로 return 됨
-        return Response(UserSerializer(request.user).data)  # 로그인 한 사용자만 ↑↑ 모든 사용자
+        return Response(user_serializer, status=status.HTTP_200_OK)  # 로그인 한 사용자만 ↑↑ 모든 사용자
 
 
         # OneToOne field는 예외로 _set이 붙지 않는다.
@@ -57,7 +64,7 @@ class UserView(APIView):    # CVB 방식
 
     def post(self, request):    # 회원가입
         serializer = UserSignupSerializer(data=request.data)
-        
+
         # 시리얼라이져 내장 함수인 is_valid를 사용허여 자체적으로 검증을 해줌
         if serializer.is_valid():
             serializer.save()
@@ -65,7 +72,7 @@ class UserView(APIView):    # CVB 방식
         else:
             print(serializer.errors)
             return Response({"errors": "signup Failed !"})
-        # return Response({"message": "put method! success"})
+        return Response({"message": "post method! success"})
 
 
     def put(self, request):     # 회원 정보 수정

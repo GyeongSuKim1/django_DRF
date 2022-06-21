@@ -2,6 +2,8 @@ from rest_framework.permissions import BasePermission
 from datetime import datetime, timedelta
 from django.utils import timezone
 
+from rest_framework.exceptions import APIException
+from rest_framework import status
 
 '''
 datetime field와 비고 시
@@ -37,3 +39,42 @@ class RegistedMoreThanDaysUser(BasePermission):
             return False
         
         return bool(user.join_date < (timezone.now() - timedelta(minutes=3)))
+
+
+# ㅡㅡ 로그인을 하지 않은 사용자 ㅡㅡ
+class GenericAPIException(APIException):
+    def __init__(self, status_code, detail=None, code=None):
+        self.status_code=status_code
+        super().__init__(detail=detail, code=code)
+
+# ㅡㅡ 로그인을 한 사용자 ㅡㅡ
+class IsAdminOrIsAuthenticatedReadOnly(BasePermission):
+    """
+    admin 사용자는 모두 가능, 로그인 사용자는 조회만 가능
+    """
+    SAFE_METHODS = ('GET', )    # 메소드를 지정 해줄수 있음
+    message = '접근 권한이 없습니다.'
+
+    def has_permission(self, request, view):
+        user = request.user
+
+        if not user.is_authenticated:
+            response ={
+                    "detail": "서비스를 이용하기 위해 로그인 해주세요.",
+                }
+            raise GenericAPIException(status_code=status.HTTP_401_UNAUTHORIZED, detail=response)
+
+        if user.is_authenticated and user.is_admin: # user가 admin일 때
+            return True
+        # user 가 인증된 사용자 이면서 리퀘스트 메소드가 세이프 메소드 안에 있을 때
+        if user.is_authenticated and request.method in self.SAFE_METHODS:
+            return True
+        
+        return False
+    
+    '''
+    따로 선언 하는 이유는 로그인이 되지 않은 사용자는 내부적으로 타는 로직이 다름
+    즉, 로그인을 한 사용자가 POST를 하다가 접근 권한이 없는거랑 
+    로그인하지 않은 사용자가 접근 권한이 없는거랑 다름
+    그래서 로그인 한 사용자 + 로그인하지 않은 사용자 두개를 지정 해줘야 함
+    '''

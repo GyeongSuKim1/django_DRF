@@ -17,19 +17,19 @@ class UserSignupSerializer(serializers.ModelSerializer):
         model = UserModel
         fields = "__all__"
         
-        def create(self, *args, **kwargs):
-            user = super().create(*args, **kwargs)
-            password = user.password
-            user.set_password(password)
-            user.save()
-            return user
-        
-        def update(self, *args, **kwargs):
-            user = super().update(*args, **kwargs)
-            password = user.password
-            user.set_password(password)
-            user.save()
-            return user
+    def create(self, *args, **kwargs):
+        user = super().create(*args, **kwargs)
+        password = user.password
+        user.set_password(password)
+        user.save()
+        return user
+    
+    def update(self, *args, **kwargs):
+        user = super().update(*args, **kwargs)
+        password = user.password
+        user.set_password(password)
+        user.save()
+        return user
         
         
 # ㅡㅡ Article return ㅡㅡ
@@ -56,8 +56,9 @@ class HobbySerializer(serializers.ModelSerializer):
         # user_list = []    # 리스트 축약식 쓰기 전
         # for user_profile in obj.userprofile_set.all():
         #     user_list.append(user_profile.user.username)
+        user = self.context["request"].user # 나의 이름 제외
 
-        return [up.user.username for up in obj.userprofile_set.all()]   # 리스트 축약식
+        return [up.user.username for up in obj.userprofile_set.exclude(user=user)]   # 리스트 축약식
     
     class Meta:
         model = HobbyModel
@@ -79,9 +80,13 @@ class UserSerializer(serializers.ModelSerializer):  # ModelSerializer를 상속�
     user_detail = UserProfileSerializer(source="userprofile")   # OneToOne 이라 object로 들어감
     articles = ArticlesSerializer(many=True, source="article_set")
     comments = CommentsSerializer(many=True, source="comment_set")
+    
+    login_user_fullname = serializers.SerializerMethodField()
+    def get_login_user_fullname(self, obj):
+        return self.context["request"].user.fullname
     class Meta: 
         model = UserModel   # UserModel을 사용하여 serializer를 만들 것 이기 때문에 UserModel을 넣어 줌
-        fields = ["username", "email", "fullname", "join_date", "user_detail", "articles", "comments"]
+        fields = ["username", "email", "fullname", "join_date", "user_detail", "articles", "comments", "login_user_fullname"]
 
 '''
 메타 클래스가 시리얼라이즈 에서 제일 중요 함

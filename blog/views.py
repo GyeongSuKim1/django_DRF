@@ -6,6 +6,7 @@ from rest_framework import status
 from .models import Article as ArticleModel
 from user.serializers import UserSerializer
 from django_DRF.permissions import RegistedMoreThanDaysUser
+from user.models import User as UserModle
 
 
 class ArticleView(APIView):
@@ -13,17 +14,20 @@ class ArticleView(APIView):
     permission_classes = [RegistedMoreThanDaysUser] # 커스텀 된 permissions
 
     def get(self, request):
-        user = request.user
-        articles = ArticleModel.objects.filter(user=user)
-
-        titles = [article.title for article in articles]    # list 축약 문법
-        contents = [article.content for article in articles]
+        article = ArticleModel.objects.all().order_by("-id")
+        print('18번 줄 : ',article)
+        return Response({ })
+        
+        # user = request.user
+        # articles = ArticleModel.objects.filter(user=user)
+        # titles = [article.title for article in articles]    # list 축약 문법
+        # contents = [article.content for article in articles]
 
         # titles = []
         # for article in articles:
         #     titles.append(article.title)
 
-        return Response({"title": titles, "content": contents})
+        # return Response({"title": titles, "content": contents})
 
     def post(self, request):
         user = request.user

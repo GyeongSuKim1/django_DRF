@@ -1,5 +1,6 @@
+from time import time
 from django.db import models
-
+from datetime import timezone
 
 # Create your models here.
 class Category(models.Model):
@@ -14,6 +15,8 @@ class Article(models.Model):
     title = models.CharField("제목", max_length=100)
     category = models.ManyToManyField(Category, verbose_name=("category"))
     content = models.TextField("내용", max_length=255)
+    exposure_start = models.DateField("노출 시작 일자",)
+    exposure_end = models.DateField("노출 종료 일자",)
     
     def __str__(self):
         return f'{self.user.username} 님이 작성하신 게시글.'

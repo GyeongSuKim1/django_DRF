@@ -45,6 +45,19 @@ class ArticleView(APIView):
 
     def post(self, request):
         user = request.user
+        request.data['user'] = user.id
+        article_serializer = ArticlesSerializer(data=request.data)
+        
+        # is_valid : 아티클 시리얼라이져의 유효성을 검증 해줌 (True or False로 결과 값 나옴)
+        if article_serializer.is_valid():
+            article_serializer.save()
+            return Response(article_serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(article_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        ''' 시리얼라이져로 이동
+        user = request.user
         title = request.data.get("title", "")
         content = request.data.get("content", "")
         categorys = request.data.get("category", [])    # 카테고리는 리스트 형태로 보내줌
@@ -71,3 +84,4 @@ class ArticleView(APIView):
         article.save()  # 저장 해주고
         article.category.add(*categorys)    # category.add를 해주어 *category를 통해 리스트를 풀어 줌
         return Response({"message": "게시글작성 성공 ! "}, status=status.HTTP_200_OK)
+        '''

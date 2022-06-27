@@ -1,4 +1,5 @@
 from multiprocessing import context
+from signal import raise_signal
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import permissions
@@ -30,7 +31,7 @@ class UserView(APIView):    # CVB 방식
     # permission_classes = [permissions.IsAdminUser]  # admin만 view 조회 가능
     # permission_classes = [permissions.IsAuthenticated] # 로그인 된 사용자만 view 조회 가능
     # permission_classes = [RegistedMoreThanAWeekUser] # 커스텀한 퍼미션클래스
-    permission_classes = [IsAdminOrIsAuthenticatedReadOnly] # admin 사용자는 모두 가능, 로그인 사용자는 조회만 가능
+    # permission_classes = [IsAdminOrIsAuthenticatedReadOnly] # admin 사용자는 모두 가능, 로그인 사용자는 조회만 가능
 
     def get(self, request):     # 사용자 정보 조회
         
@@ -63,20 +64,34 @@ class UserView(APIView):    # CVB 방식
 
 
     def post(self, request):    # 회원가입
-        serializer = UserSignupSerializer(data=request.data)
+        user_serializer = UserSerializer(data=request.data, context={'request': request})
+        # True로 바꿔 줌 으로써 분기문으로 나눠주지 않아도 raise_signal이 알아서 에러를 줌
+        user_serializer.is_valid(raise_exception=True) # raise_exception의 기본값은 False 
+        user_serializer.save()
+        return Response(user_serializer.data, status=status.HTTP_200_OK)
+        
 
         # 시리얼라이져 내장 함수인 is_valid를 사용허여 자체적으로 검증을 해줌
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "signup Success !"})
-        else:
-            print(serializer.errors)
-            return Response({"errors": "signup Failed !"})
-        return Response({"message": "post method! success"})
+        # if user_serializer.is_valid():
+        #     user_serializer.save()
+        #     return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+        # return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    def put(self, request):     # 회원 정보 수정
-        return Response({"message": "put method! success"})
+    def put(self, request, obj_id):     # 회원 정보 수정
+        # user = request.user
+        user = UserModel.objects.get(id=obj_id)
+        request.data.pop("username", "")    # username은 수정 불가는
+        user_serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
+        
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response(user_serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
     def delete(self, request):  # 회원 탈퇴
         return Response({"message": "delete method! success"})

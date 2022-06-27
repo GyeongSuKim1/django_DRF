@@ -7,4 +7,5 @@ urlpatterns = [
     path('', views.UserView.as_view()),  # CBV 는 위에 as_view()를 적어줘야 함
     path('login/', views.UserAPIView.as_view()),
     path('logout/', views.UserAPIView.as_view()),
+    path('<obj_id>/', views.UserView.as_view()),
 ]
